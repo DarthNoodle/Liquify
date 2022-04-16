@@ -1,0 +1,40 @@
+﻿@page "/CoinList"
+
+
+<PageTitle>Coins In DB</PageTitle>
+
+
+
+
+<table>
+
+    @foreach(var coin in CoinsList){
+        <tr>
+            <td>@coin.Symbol</td>
+            <td>@coin.Name</td>
+            <td>@coin.Address</td>
+            <td>@coin.Chain</td>
+        </tr>
+    }
+
+</table>
+
+
+
+
+
+@code {
+    [Inject]
+    public IDataStorage dataStorage { get; set; }
+
+    public List<Coin> CoinsList { get; set; }
+
+
+    protected override Task OnInitializedAsync()
+    {
+        CoinsList = dataStorage.CoinStore.Database.Values.ToList();
+
+
+        return base.OnInitializedAsync();
+    }
+}

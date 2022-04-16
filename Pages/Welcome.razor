@@ -1,0 +1,85 @@
+﻿@page "/"
+
+@using MetaMask.Blazor
+@using Nethereum.Web3
+@using Liquify.Code.Util.SolidUtils
+
+
+<Table DataSource="@CoinLPList" TItem="CoinLP" Size=@TableSize.Small>
+
+    <AntDesign.Column @bind-Field="context.Name"></AntDesign.Column>
+     <AntDesign.Column @bind-Field="context.Weight">
+
+         @string.Format($"{context.Weight} ({decimal.Multiply(decimal.Divide(context.Weight, TotalWeight), 100).ToString("0.##")} %)")
+
+     </AntDesign.Column>
+    <AntDesign.Column @bind-Field="context.IsStable"></AntDesign.Column>
+</Table>
+
+
+@code {
+    [Inject]
+    public MetaMaskService MetaMaskService { get; set; } = default!;
+
+    [Inject]
+    public AccountStateContainer AccountState { get; set; }
+    
+    [Inject]
+    public IDataStorage DataStore { get; set; }
+
+    public List<CoinLP> CoinLPList;
+
+    public bool HasMetaMask { get; set; }
+    public bool IsConnected { get; set; }
+    public string SelectedAddress { get; set; }
+    public string SelectedChain { get; set; }
+    public decimal TotalWeight;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Subscribe to events
+
+        //HasMetaMask = await MetaMaskService.HasMetaMask();
+        //if (HasMetaMask)
+        //    await MetaMaskService.ListenToEvents();
+
+        //AccountState.HasMetaMask = await MetaMaskService.HasMetaMask();
+        //AccountState.IsConnected = await MetaMaskService.IsSiteConnected();
+
+        //    if (AccountState.IsConnected)
+        //    {
+        //        await GetSelectedAddress();
+        //        await GetSelectedNetwork();
+        //    }
+        //    else
+        //    {
+        //        await MetaMaskService.ConnectMetaMask();
+        //    }
+
+          
+
+        //    AccountState.Address = await MetaMaskService.GetSelectedAddress();
+
+            SolidPoker poker = new SolidPoker(DataStore, AccountState);
+
+            await poker.GetLiquidityPools();
+            TotalWeight = Web3.Convert.FromWei(await poker.GetTotalWeight());
+
+            CoinLPList = DataStore.CoinLPStore.Database.Values.Where(lp => lp.isWhitelisted).OrderByDescending(lp => lp.Weight).ToList();
+     }//end of constructor
+     
+        public async Task GetSelectedAddress()
+        {
+            SelectedAddress = await MetaMaskService.GetSelectedAddress();
+            Console.WriteLine($"Address: {SelectedAddress}");
+        }
+        
+        public async Task GetSelectedNetwork()
+        {
+            var chainInfo = await MetaMaskService.GetSelectedChain();
+
+            SelectedChain = $"ChainID: {chainInfo.chainId}, Name: {chainInfo.chain.ToString()}";
+            Console.WriteLine($"ChainID: {chainInfo.chainId}");
+        }
+}
